@@ -126,6 +126,16 @@ public class AVLTree<K extends Comparable<K>, V> {
             node.value = value;
         }
 
+
+        return getNode(node);
+    }
+
+    // 维护平衡树
+    private Node getNode(Node node) {
+        if (node == null) {
+            return null;
+        }
+
         node.height = 1 + Math.max(getHeight(node.left), getHeight(node.right));
         int balanceFactor = getBalanceFactor(node);
 //        if (Math.abs(balanceFactor) > 1) {
@@ -154,20 +164,18 @@ public class AVLTree<K extends Comparable<K>, V> {
 //      t2  t3
 //
 //
-
         // 平衡维护
         if (balanceFactor > 1 && getBalanceFactor(node.left) >= 0) {
             node = rightRotate(node);
-        } else if (balanceFactor < -1 && getBalanceFactor(node.right) < 0) {
+        } else if (balanceFactor < -1 && getBalanceFactor(node.right) <= 0) {
             node = leftRotate(node);
-        } else if (balanceFactor > 1 && getBalanceFactor(node.left) <= 0) {
+        } else if (balanceFactor > 1 && getBalanceFactor(node.left) < 0) {
             node.left = leftRotate(node.left);
             node = rightRotate(node);
         } else if (balanceFactor < -1 && getBalanceFactor(node.right) > 0) {
             node.right = rightRotate(node.right);
             node = leftRotate(node);
         }
-
         return node;
     }
 
@@ -215,21 +223,6 @@ public class AVLTree<K extends Comparable<K>, V> {
         return minimum(node.left);
     }
 
-    // 删除掉以node为根的二分搜索树中的最小节点
-    // 返回删除节点后新的二分搜索树的根
-    private Node removeMin(Node node) {
-
-        if (node.left == null) {
-            Node rightNode = node.right;
-            node.right = null;
-            size--;
-            return rightNode;
-        }
-
-        node.left = removeMin(node.left);
-        return node;
-    }
-
     // 从二分搜索树中删除键为key的节点
     public V remove(K key) {
 
@@ -247,12 +240,13 @@ public class AVLTree<K extends Comparable<K>, V> {
             return null;
         }
 
+        Node retNode;
         if (key.compareTo(node.key) < 0) {
             node.left = remove(node.left, key);
-            return node;
+            retNode = node;
         } else if (key.compareTo(node.key) > 0) {
             node.right = remove(node.right, key);
-            return node;
+            retNode = node;
         } else {   // key.compareTo(node.key) == 0
 
             // 待删除节点左子树为空的情况
@@ -260,29 +254,30 @@ public class AVLTree<K extends Comparable<K>, V> {
                 Node rightNode = node.right;
                 node.right = null;
                 size--;
-                return rightNode;
+                retNode = rightNode;
             }
-
             // 待删除节点右子树为空的情况
-            if (node.right == null) {
+            else if (node.right == null) {
                 Node leftNode = node.left;
                 node.left = null;
                 size--;
-                return leftNode;
+                retNode = leftNode;
+            } else {
+
+                // 待删除节点左右子树均不为空的情况
+
+                // 找到比待删除节点大的最小节点, 即待删除节点右子树的最小节点
+                // 用这个节点顶替待删除节点的位置
+                Node successor = minimum(node.right);
+                successor.right = remove(node.right, successor.key);
+                successor.left = node.left;
+
+                node.left = node.right = null;
+
+                retNode = successor;
             }
-
-            // 待删除节点左右子树均不为空的情况
-
-            // 找到比待删除节点大的最小节点, 即待删除节点右子树的最小节点
-            // 用这个节点顶替待删除节点的位置
-            Node successor = minimum(node.right);
-            successor.right = removeMin(node.right);
-            successor.left = node.left;
-
-            node.left = node.right = null;
-
-            return successor;
         }
+        return getNode(retNode);
     }
 
     public static void main(String[] args) {
@@ -308,8 +303,32 @@ public class AVLTree<K extends Comparable<K>, V> {
 
             System.out.println("is BST: " + avlTree.isBST());
             System.out.println("is Balanced: " + avlTree.isBanlanced());
-        }
 
-        System.out.println();
+            words.forEach(
+                    (e) -> {
+                        avlTree.remove(e);
+                        if (!avlTree.isBST() || !avlTree.isBanlanced()) {
+                            throw new RuntimeException("Error");
+                        }
+                    }
+            );
+        }
+//
+//        System.out.println();
+//        AVLTree<Integer, Integer> tree = new AVLTree<>();
+//        tree.add(8, null);
+//        tree.add(4, null);
+//        tree.add(9, null);
+//        tree.add(2, null);
+//        tree.add(6, null);
+//        tree.add(10, null);
+//        tree.add(1, null);
+//        tree.add(3, null);
+//        tree.add(7, null);
+//        tree.remove(8);
+//
+//        if(!tree.isBanlanced()) {
+//            throw new RuntimeException("remove not Balanced");
+//        }
     }
 }
