@@ -83,6 +83,25 @@ public class AVLTree<K extends Comparable<K>, V> {
         return getHeight(node.left) - getHeight(node.right);
     }
 
+    private Node rightRotate(Node y) {
+        Node x = y.left;
+        Node t3 = x.right;
+        y.left = t3;
+        x.height = Math.max(getHeight(x.left), getHeight(x.right)) + 1;
+        y.height = Math.max(getHeight(y.left), getHeight(y.right)) + 1;
+        x.right = y;
+        return x;
+    }
+
+    private Node leftRotate(Node y) {
+        Node x = y.right;
+        Node t3 = x.left;
+        y.right = t3;
+        x.height = Math.max(getHeight(x.left), getHeight(x.right)) + 1;
+        y.height = Math.max(getHeight(y.left), getHeight(y.right)) + 1;
+        x.left = y;
+        return x;
+    }
 
     // 向二分搜索树中添加新的元素(key, value)
     public void add(K key, V value) {
@@ -109,8 +128,44 @@ public class AVLTree<K extends Comparable<K>, V> {
 
         node.height = 1 + Math.max(getHeight(node.left), getHeight(node.right));
         int balanceFactor = getBalanceFactor(node);
-        if (Math.abs(balanceFactor) > 1) {
-            System.out.println("unbalanced: " + balanceFactor);
+//        if (Math.abs(balanceFactor) > 1) {
+//            System.out.println("unbalanced: " + balanceFactor);
+//        }
+
+//   t1 < z < t2 < x < t3 < y < t4
+//                mid
+//        y                             x
+//       / \                          /   \
+//      x   t4          右旋         z     y
+//     / \           --------->     / \   / \
+//    z  t3                        t1 t2 t3  t4
+//   / \
+//  t1 t2
+//
+//
+//   t1 < x < t2 < z < t3 < y < t4
+//                mid
+//        y                             z
+//       / \                          /   \
+//      x   t4         左右旋         x     y
+//     / \           --------->     / \   / \
+//    t1  z                        t1 t2 t3  t4
+//       / \
+//      t2  t3
+//
+//
+
+        // 平衡维护
+        if (balanceFactor > 1 && getBalanceFactor(node.left) >= 0) {
+            node = rightRotate(node);
+        } else if (balanceFactor < -1 && getBalanceFactor(node.right) < 0) {
+            node = leftRotate(node);
+        } else if (balanceFactor > 1 && getBalanceFactor(node.left) <= 0) {
+            node.left = leftRotate(node.left);
+            node = rightRotate(node);
+        } else if (balanceFactor < -1 && getBalanceFactor(node.right) > 0) {
+            node.right = rightRotate(node.right);
+            node = leftRotate(node);
         }
 
         return node;
